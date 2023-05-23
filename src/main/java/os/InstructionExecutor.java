@@ -1,5 +1,7 @@
 package os;
 
+import os.processes.Process;
+
 public class InstructionExecutor {
     private final Kernel kernel;
 

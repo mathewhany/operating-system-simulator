@@ -1,7 +1,10 @@
 package os;
 
+import os.memory.MemoryAllocator;
 import os.memory.MemoryBlock;
-import os.memory.PhysicalMemory;
+import os.processes.PCB;
+import os.processes.Process;
+import os.processes.ProcessState;
 
 import java.io.File;
 import java.io.IOException;
@@ -34,7 +37,7 @@ public class ProcessManager {
                 allocateMemoryForProcess(processSize)
             );
 
-            processes.put(process.getProcessId(), process);
+            processes.put(process.getPcb().getProcessId(), process);
 
             return process;
         } catch (IOException e) {
@@ -59,55 +62,48 @@ public class ProcessManager {
     }
 
     public void removeProcess(int processId) {
-        Process process = processes.get(processId);
-        kernel.getMemory().free(process.getMemoryStart(), process.getSize());
+        MemoryAllocator allocator = kernel.getMemoryAllocator();
+        PCB pcb = processes.get(processId).getPcb();
+        allocator.free(pcb.getMemoryStart(), pcb.getProcessSize());
         processes.remove(processId);
     }
 
     private void saveProcessToDisk(int processId) {
         Process process = getProcess(processId);
-        String memoryDump = process.memoryDump();
-
-        try {
-            Files.writeString(getPathForMemoryDump(processId), memoryDump);
-            removeProcess(processId);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
     }
 
     private Process loadProcessFromDisk(int processId) {
-        try {
-            List<String> memoryDump = Files.readAllLines(getPathForMemoryDump(processId));
-            int processSize = memoryDump.size();
-            Process process = new Process(memoryDump, allocateMemoryForProcess(processSize));
-            processes.put(process.getProcessId(), process);
-            return process;
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+//        try {
+//            List<String> memoryDump = Files.readAllLines(getPathForMemoryDump(processId));
+//            int processSize = memoryDump.size();
+//            Process process = new Process(memoryDump, allocateMemoryForProcess(processSize));
+//            processes.put(process.getProcessId(), process);
+//            return process;
+//        } catch (IOException e) {
+//            throw new RuntimeException(e);
+//        }
+        return null;
     }
 
     private MemoryBlock allocateMemoryForProcess(int size) {
-        PhysicalMemory memory = kernel.getMemory();
-        int memoryStart = memory.allocate(size);
+        int start = kernel.getMemoryAllocator().allocate(size);
 
-        if (memoryStart == -1) {
+        if (start == -1) {
             Process processToSwapWith = getFirstBlockedProcess();
             if (processToSwapWith == null) {
                 processToSwapWith = processes.get(0);
             }
-            saveProcessToDisk(processToSwapWith.getProcessId());
+            saveProcessToDisk(processToSwapWith.getPcb().getProcessId());
             return allocateMemoryForProcess(size);
         }
 
-        return new MemoryBlock(memoryStart, size, memory);
+        return new MemoryBlock(start, size, kernel.getMemory());
     }
 
     private Process getFirstBlockedProcess() {
         for (int processId : processes.keySet()) {
             Process process = processes.get(processId);
-            if (process.getProcessState() == ProcessState.BLOCKED) {
+            if (process.getPcb().getProcessState() == ProcessState.BLOCKED) {
                 return process;
             }
         }

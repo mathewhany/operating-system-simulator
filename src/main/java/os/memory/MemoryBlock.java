@@ -1,8 +1,5 @@
 package os.memory;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class MemoryBlock implements Memory {
     private final int start;
     private final int size;
@@ -22,11 +19,15 @@ public class MemoryBlock implements Memory {
         memory.write(start + address, value);
     }
 
+    public int getSize() {
+        return size;
+    }
+
     public int getStart() {
         return start;
     }
 
-    public int getSize() {
-        return size;
+    public int getEnd() {
+        return start + size;
     }
 }

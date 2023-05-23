@@ -1,5 +1,8 @@
 package os;
 
+import os.processes.Process;
+import os.processes.ProcessState;
+
 import java.util.*;
 
 public class Scheduler {
@@ -31,7 +34,7 @@ public class Scheduler {
         if (scheduledPrograms.containsKey(clock)) {
             for (String path : scheduledPrograms.get(clock)) {
                 Process process = processManager.createProcess(path);
-                readyQueue.add(process.getProcessId());
+                readyQueue.add(process.getPcb().getProcessId());
             }
             scheduledPrograms.remove(clock);
         }
@@ -49,7 +52,7 @@ public class Scheduler {
                 Process process = processManager.getProcess(processId);
 
                 for (int i = 0; i < quantum && process.hasInstructions() &&
-                                process.getProcessState() != ProcessState.BLOCKED; i++) {
+                                process.getPcb().getProcessState() != ProcessState.BLOCKED; i++) {
                     String instruction = process.getNextInstruction();
                     instructionExecutor.execute(process, instruction);
                     process.incrementProgramCounter();
@@ -57,7 +60,7 @@ public class Scheduler {
                     addScheduledPrograms();
                 }
 
-                if (process.getProcessState() != ProcessState.BLOCKED) {
+                if (process.getPcb().getProcessState() != ProcessState.BLOCKED) {
                     if (process.hasInstructions()) {
                         readyQueue.add(processId);
                     } else {
@@ -73,6 +76,6 @@ public class Scheduler {
 
     public void addProcess(int processId) {
         readyQueue.add(processId);
-        kernel.getProcessManager().getProcess(processId).setProcessState(ProcessState.READY);
+        kernel.getProcessManager().getProcess(processId).getPcb().setProcessState(ProcessState.READY);
     }
 }

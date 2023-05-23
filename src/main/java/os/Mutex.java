@@ -1,5 +1,7 @@
 package os;
 
+import os.processes.ProcessState;
+
 import java.util.LinkedList;
 import java.util.Queue;
 
@@ -17,7 +19,7 @@ public class Mutex {
             owner = processId;
         } else {
             blockedQueue.add(processId);
-            kernel.getProcessManager().getProcess(processId).setProcessState(ProcessState.BLOCKED);
+            kernel.getProcessManager().getProcess(processId).getPcb().setProcessState(ProcessState.BLOCKED);
         }
     }
 
