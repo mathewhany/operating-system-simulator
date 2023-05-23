@@ -53,7 +53,7 @@ public class Scheduler {
         while (!readyQueue.isEmpty() || !scheduledPrograms.isEmpty()) {
             System.out.println("Clock (" + clock + ")");
             System.out.println("Memory");
-            System.out.println(kernel.getProcessManager().printProcessesMemories());
+//            System.out.println(kernel.getProcessManager().printProcessesMemories());
 
             if (!readyQueue.isEmpty()) {
                 Process process = chooseProcessToRun();

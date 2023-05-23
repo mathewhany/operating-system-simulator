@@ -21,7 +21,7 @@ public class Kernel {
         this.scheduler = new Scheduler(quantumSize, this);
         this.processManager =
             new ProcessManager(processStoragePath, this, new DefaultProcessSerializer());
-        this.instructionExecutor = new InstructionExecutor(this);
+        this.instructionExecutor = new InstructionExecutor(this, processManager);
         this.memoryAllocator = new MemoryAllocator(memory);
 
         mutexes.put("file", new Mutex(this));
