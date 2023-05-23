@@ -1,12 +1,15 @@
 package os;
 
 import os.processes.Process;
+import os.processes.ProcessManager;
 import os.processes.ProcessState;
 
 import java.util.*;
 
 public class Scheduler {
-    private final Deque<Integer> readyQueue = new LinkedList<>();
+    private final Queue<Integer> readyQueue = new LinkedList<>();
+    private final Queue<Integer> blockedProcesses = new LinkedList<>();
+
     private final int quantum;
     private final Kernel kernel;
     private int clock;
@@ -51,17 +54,18 @@ public class Scheduler {
                 int processId = readyQueue.remove();
                 Process process = processManager.getProcess(processId);
 
+                boolean hasMoreInstructions = process.hasInstructions();
                 for (int i = 0; i < quantum && process.hasInstructions() &&
                                 process.getPcb().getProcessState() != ProcessState.BLOCKED; i++) {
                     String instruction = process.getNextInstruction();
                     instructionExecutor.execute(process, instruction);
-                    process.incrementProgramCounter();
                     clock++;
+                    hasMoreInstructions = process.hasInstructions();
                     addScheduledPrograms();
                 }
 
                 if (process.getPcb().getProcessState() != ProcessState.BLOCKED) {
-                    if (process.hasInstructions()) {
+                    if (hasMoreInstructions) {
                         readyQueue.add(processId);
                     } else {
                         processManager.removeProcess(processId);
@@ -76,6 +80,29 @@ public class Scheduler {
 
     public void addProcess(int processId) {
         readyQueue.add(processId);
-        kernel.getProcessManager().getProcess(processId).getPcb().setProcessState(ProcessState.READY);
+        kernel.getProcessManager()
+              .getProcess(processId)
+              .getPcb()
+              .setProcessState(ProcessState.READY);
+    }
+
+    public void blockProcess(int processId) {
+        blockedProcesses.add(processId);
+        kernel.getProcessManager()
+              .getProcess(processId)
+              .getPcb()
+              .setProcessState(ProcessState.BLOCKED);
+    }
+
+    public void unblockProcess(int processId) {
+        blockedProcesses.remove(processId);
+        kernel.getProcessManager()
+              .getProcess(processId)
+              .getPcb()
+              .setProcessState(ProcessState.READY);
+    }
+
+    public List<Integer> getBlockedProcesses() {
+        return new ArrayList<>(blockedProcesses);
     }
 }

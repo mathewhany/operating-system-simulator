@@ -3,6 +3,8 @@ package os;
 import os.memory.Memory;
 import os.memory.MemoryAllocator;
 import os.memory.PhysicalMemory;
+import os.processes.DefaultProcessSerializer;
+import os.processes.ProcessManager;
 
 import java.util.HashMap;
 
@@ -17,7 +19,8 @@ public class Kernel {
     public Kernel(int memorySize, int quantumSize, String processStoragePath) {
         this.memory = new PhysicalMemory(memorySize);
         this.scheduler = new Scheduler(quantumSize, this);
-        this.processManager = new ProcessManager(processStoragePath, this);
+        this.processManager =
+            new ProcessManager(processStoragePath, this, new DefaultProcessSerializer());
         this.instructionExecutor = new InstructionExecutor(this);
         this.memoryAllocator = new MemoryAllocator(memory);
 

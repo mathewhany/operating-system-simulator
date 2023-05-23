@@ -3,7 +3,8 @@ package os.processes;
 import os.memory.MemoryBlock;
 
 public class PCB extends MemoryBlock {
-    private static final int PCB_SIZE = 5;
+    public static final int PCB_SIZE = 5;
+
     private final int POS_MEMORY_START = 0;
     private final int POS_PROCESS_SIZE = 1;
     private final int POS_PROCESS_ID = 2;

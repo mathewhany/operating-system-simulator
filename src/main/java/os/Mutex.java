@@ -19,7 +19,7 @@ public class Mutex {
             owner = processId;
         } else {
             blockedQueue.add(processId);
-            kernel.getProcessManager().getProcess(processId).getPcb().setProcessState(ProcessState.BLOCKED);
+            kernel.getScheduler().blockProcess(processId);
         }
     }
 
@@ -32,7 +32,7 @@ public class Mutex {
             owner = -1;
         } else {
             int nextProcessId = blockedQueue.remove();
-            kernel.getScheduler().addProcess(nextProcessId);
+            kernel.getScheduler().unblockProcess(nextProcessId);
         }
     }
 }

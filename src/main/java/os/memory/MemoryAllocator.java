@@ -38,4 +38,20 @@ public class MemoryAllocator {
             memory.write(i, null);
         }
     }
+
+    public int getMaxAvailableBlockSize() {
+        int max = 0;
+        int count = 0;
+        for (boolean b : allocated) {
+            if (b) {
+                count = 0;
+            } else {
+                count++;
+                if (count > max) {
+                    max = count;
+                }
+            }
+        }
+        return max;
+    }
 }

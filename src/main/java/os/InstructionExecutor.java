@@ -10,6 +10,6 @@ public class InstructionExecutor {
     }
 
     public void execute(Process process, String instruction) {
-        
+
     }
 }
