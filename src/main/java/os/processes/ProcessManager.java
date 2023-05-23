@@ -49,6 +49,8 @@ public class ProcessManager {
 
             processes.put(process.getPcb().getProcessId(), process);
 
+            System.out.println("Process created: " + process.getPcb().getProcessId());
+
             return process;
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -74,10 +76,12 @@ public class ProcessManager {
         ProcessData processData = process.toProcessData();
         Path path = getPathForProcess(process.getPcb().getProcessId());
         String serializedProcess = processSerializer.serialize(processData);
+        System.out.println("Process saved to disk: " + process.getPcb().getProcessId());
 
         try {
             Files.writeString(path, serializedProcess);
             removeProcess(process.getPcb().getProcessId());
+
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -96,6 +100,8 @@ public class ProcessManager {
             Process process =
                 new Process(processData, allocateMemoryForProcess(processData.getProcessSize()));
             processes.put(processId, process);
+
+            System.out.println("Process loaded from disk: " + process.getPcb().getProcessId());
             return process;
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -142,4 +148,5 @@ public class ProcessManager {
 
         return new MemoryBlock(start, size, kernel.getMemory());
     }
+
 }

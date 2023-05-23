@@ -21,16 +21,19 @@ public class DefaultProcessSerializer implements ProcessSerializer {
         lines.add("end=" + process.getMemoryEnd());
         lines.add("state=" + process.getProcessState());
         lines.add("[END PCB]");
+        lines.add("");
 
         lines.add("[START INSTRUCTIONS]");
         lines.addAll(process.getInstructions());
         lines.add("[END INSTRUCTIONS]");
+        lines.add("");
 
         lines.add("[START VARIABLES]");
         for (String name : process.getVariables().keySet()) {
             lines.add(name + "=" + process.getVariables().get(name));
         }
         lines.add("[END VARIABLES]");
+        lines.add("");
 
         if (process.getReadFileTemp() != null) {
             lines.add("[READ FILE TEMP]");
@@ -62,6 +65,10 @@ public class DefaultProcessSerializer implements ProcessSerializer {
         boolean inReadFileTemp = false;
 
         for (String line : lines) {
+            if (line.equals("")) {
+                continue;
+            }
+
             if (line.equals("[START PCB]")) {
                 inPCB = true;
             } else if (line.equals("[END PCB]")) {

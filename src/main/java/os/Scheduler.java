@@ -36,6 +36,7 @@ public class Scheduler {
 
         if (scheduledPrograms.containsKey(clock)) {
             for (String path : scheduledPrograms.get(clock)) {
+                System.out.println("Program arrived at clock " + clock + ": " + path);
                 Process process = processManager.createProcess(path);
                 readyQueue.add(process.getPcb().getProcessId());
             }
@@ -50,9 +51,13 @@ public class Scheduler {
         addScheduledPrograms();
 
         while (!readyQueue.isEmpty() || !scheduledPrograms.isEmpty()) {
+            System.out.println("Clock (" + clock + ")");
+            System.out.println("Memory");
+            System.out.println(kernel.getProcessManager().printProcessesMemories());
+
             if (!readyQueue.isEmpty()) {
-                int processId = readyQueue.remove();
-                Process process = processManager.getProcess(processId);
+                Process process = chooseProcessToRun();
+                int processId = process.getPcb().getProcessId();
 
                 boolean hasMoreInstructions = process.hasInstructions();
                 for (int i = 0; i < quantum && process.hasInstructions() &&
@@ -75,7 +80,22 @@ public class Scheduler {
                 clock++;
                 addScheduledPrograms();
             }
+            System.out.println();
         }
+    }
+
+    private Process chooseProcessToRun() {
+        int processId = readyQueue.remove();
+
+        Process process = kernel.getProcessManager()
+                                .getProcess(processId);
+
+        process.getPcb().setProcessState(ProcessState.RUNNING);
+
+        System.out.println("Process " + processId + " chosen to run.");
+        printQueues();
+
+        return process;
     }
 
     public void addProcess(int processId) {
@@ -84,6 +104,9 @@ public class Scheduler {
               .getProcess(processId)
               .getPcb()
               .setProcessState(ProcessState.READY);
+
+        System.out.println("Added process " + processId + " to ready queue.");
+        printQueues();
     }
 
     public void blockProcess(int processId) {
@@ -92,6 +115,9 @@ public class Scheduler {
               .getProcess(processId)
               .getPcb()
               .setProcessState(ProcessState.BLOCKED);
+
+        System.out.println("Blocked process " + processId);
+        printQueues();
     }
 
     public void unblockProcess(int processId) {
@@ -100,6 +126,14 @@ public class Scheduler {
               .getProcess(processId)
               .getPcb()
               .setProcessState(ProcessState.READY);
+
+        System.out.println("Unblocked process " + processId);
+        printQueues();
+    }
+
+    public void printQueues() {
+        System.out.println("Ready queue: " + readyQueue);
+        System.out.println("Blocked queue: " + blockedProcesses);
     }
 
     public List<Integer> getBlockedProcesses() {
