@@ -19,4 +19,11 @@ public class PhysicalMemory implements Memory {
     public int getSize() {
         return memory.length;
     }
+
+    @Override
+    public int getPhysicalAddress(int address) {
+        return address;
+    }
+
+
 }

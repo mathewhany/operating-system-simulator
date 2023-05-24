@@ -44,12 +44,14 @@ public class ProcessManager {
             Process process = new Process(
                 nextProcessId++,
                 instructions,
-                allocateMemoryForProcess(Process.calculateProcessSize(instructions))
+                allocateMemoryForProcess(Process.calculateProcessSize(instructions)),
+                kernel.getMemory()
             );
 
             processes.put(process.getPcb().getProcessId(), process);
 
-            System.out.println("Process created: " + process.getPcb().getProcessId());
+            System.out.println(
+                "Process with PID #" + process.getPcb().getProcessId() + " created for " + path);
 
             return process;
         } catch (IOException e) {
@@ -76,7 +78,8 @@ public class ProcessManager {
         ProcessData processData = process.toProcessData();
         Path path = getPathForProcess(process.getPcb().getProcessId());
         String serializedProcess = processSerializer.serialize(processData);
-        System.out.println("Process saved to disk: " + process.getPcb().getProcessId());
+
+        System.out.println("Saving process #" + process.getPcb().getProcessId() + " to disk.");
 
         try {
             Files.writeString(path, serializedProcess);
@@ -98,17 +101,22 @@ public class ProcessManager {
             String serializedProcess = Files.readString(path);
             ProcessData processData = processSerializer.deserialize(serializedProcess);
             Process process =
-                new Process(processData, allocateMemoryForProcess(processData.getProcessSize()));
+                new Process(
+                    processData,
+                    allocateMemoryForProcess(processData.getProcessSize()),
+                    kernel.getMemory()
+                );
             processes.put(processId, process);
 
-            System.out.println("Process loaded from disk: " + process.getPcb().getProcessId());
+            System.out.println(
+                "Process #" + process.getPcb().getProcessId() + " loaded from disk.");
             return process;
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
 
-    private MemoryBlock allocateMemoryForProcess(int size) {
+    private int allocateMemoryForProcess(int size) {
         Scheduler scheduler = kernel.getScheduler();
         MemoryAllocator allocator = kernel.getMemoryAllocator();
 
@@ -127,7 +135,18 @@ public class ProcessManager {
 
             if (!didFree) {
                 for (Process process : processes.values()) {
-                    if (process.getPcb().getProcessSize() >= size) {
+                    if (process.getPcb().getProcessState() != ProcessState.RUNNING &&
+                        process.getPcb().getProcessSize() >= size) {
+                        saveProcessToDisk(process);
+                        didFree = true;
+                        break;
+                    }
+                }
+            }
+
+            if (!didFree) {
+                for (Process process : processes.values()) {
+                    if (process.getPcb().getProcessState() != ProcessState.RUNNING) {
                         saveProcessToDisk(process);
                         didFree = true;
                         break;
@@ -146,7 +165,10 @@ public class ProcessManager {
             }
         }
 
-        return new MemoryBlock(start, size, kernel.getMemory());
+        return start;
     }
 
+    public HashMap<Integer, Process> getProcessesInMemory() {
+        return processes;
+    }
 }

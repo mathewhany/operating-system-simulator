@@ -1,5 +1,6 @@
 package os.processes;
 
+import os.memory.Memory;
 import os.memory.MemoryBlock;
 import os.memory.Variable;
 
@@ -13,14 +14,14 @@ public class Process {
     private final PCB pcb;
     private final MemoryBlock instructions;
     private final MemoryBlock variables;
-    private String readFileTemp;
+    private String tempVariable;
 
 
-    public Process(int id, List<String> instructions, MemoryBlock memory) {
-        this.pcb = new PCB(id, memory);
-        this.instructions = new MemoryBlock(pcb.getEnd(), instructions.size(), memory);
+    public Process(int id, List<String> instructions, int memoryStart, Memory memory) {
+        this.pcb = new PCB(id, memoryStart, calculateProcessSize(instructions), memory);
+        this.instructions = new MemoryBlock(pcb.getEnd() + 1, instructions.size(), memory);
         this.variables =
-            new MemoryBlock(this.instructions.getEnd(), MAX_VARIABLES, memory);
+            new MemoryBlock(this.instructions.getEnd() + 1, MAX_VARIABLES, memory);
 
         setInstructions(instructions);
     }
@@ -107,8 +108,15 @@ public class Process {
         return variables;
     }
 
-    public Process(ProcessData data, MemoryBlock memory) {
-        this(data.getProcessId(), data.getInstructions(), memory);
+    public Process(ProcessData data, int memoryStart, Memory memory) {
+        this(data.getProcessId(), data.getInstructions(), memoryStart, memory);
+
+        pcb.setProcessState(data.getProcessState());
+        pcb.setProgramCounter(data.getProgramCounter());
+
+        for (String name : data.getVariables().keySet()) {
+            setVariable(name, data.getVariables().get(name));
+        }
     }
 
     public ProcessData toProcessData() {
@@ -127,7 +135,7 @@ public class Process {
             pcb.getProcessState(),
             getInstructions(),
             variables,
-            readFileTemp
+            tempVariable
         );
     }
 
@@ -135,11 +143,24 @@ public class Process {
         return instructions.size() + MAX_VARIABLES + PCB.PCB_SIZE;
     }
 
-    public String getReadFileTemp() {
-        return readFileTemp;
+    public String getTemp() {
+        return tempVariable;
     }
 
-    public void setReadFileTemp(String contents) {
-        this.readFileTemp = contents;
+    public void setTemp(String contents) {
+        this.tempVariable = contents;
+    }
+
+    public boolean inProcessAddressSpace(int address) {
+        return address >= pcb.getMemoryStart() &&
+               address < pcb.getMemoryStart() + pcb.getProcessSize();
+    }
+
+    public MemoryBlock getInstructionsMemory() {
+        return instructions;
+    }
+
+    public MemoryBlock getVariablesMemory() {
+        return variables;
     }
 }

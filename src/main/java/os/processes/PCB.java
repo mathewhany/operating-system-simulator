@@ -1,67 +1,83 @@
 package os.processes;
 
+import os.memory.Memory;
 import os.memory.MemoryBlock;
+
+import java.util.Arrays;
+import java.util.List;
 
 public class PCB extends MemoryBlock {
     public static final int PCB_SIZE = 5;
 
-    private final int POS_MEMORY_START = 0;
-    private final int POS_PROCESS_SIZE = 1;
-    private final int POS_PROCESS_ID = 2;
-    private final int POS_PROCESS_STATE = 3;
-    private final int POS_PC = 4;
+    private static final String KEY_MEMORY_START = "Memory Start";
+    private static final String KEY_PROCESS_SIZE = "Process Size";
+    private static final String KEY_PROCESS_ID = "Process ID";
+    private static final String KEY_PROCESS_STATE = "Process State";
+    private static final String KEY_PC = "Program Counter";
 
-    public PCB(int pid, MemoryBlock logicalMemory) {
-        super(0, PCB_SIZE, logicalMemory);
+    private static final List<String> KEYS = Arrays.stream(new String[]{
+        KEY_MEMORY_START,
+        KEY_PROCESS_SIZE,
+        KEY_PROCESS_ID,
+        KEY_PROCESS_STATE,
+        KEY_PC
+    }).toList();
 
-        setMemoryStart(logicalMemory.getStart());
-        setProcessSize(logicalMemory.getSize());
+    public PCB(int pid, int memoryStart, int processSize, Memory memory) {
+        super(memoryStart, PCB_SIZE, memory);
+
+        setMemoryStart(memoryStart);
+        setProcessSize(processSize);
         setProcessId(pid);
         setProcessState(ProcessState.READY);
         setProgramCounter(0);
     }
 
     public int getMemoryStart() {
-        return (int) read(POS_MEMORY_START);
+        return (int) read(KEYS.indexOf(KEY_MEMORY_START));
     }
 
     private void setMemoryStart(int memoryStart) {
-        write(POS_MEMORY_START, memoryStart);
+        write(KEYS.indexOf(KEY_MEMORY_START), memoryStart);
     }
 
     public int getProcessId() {
-        return (int) read(POS_PROCESS_ID);
+        return (int) read(KEYS.indexOf(KEY_PROCESS_ID));
     }
 
     private void setProcessId(int id) {
-        write(POS_PROCESS_ID, id);
+        write(KEYS.indexOf(KEY_PROCESS_ID), id);
     }
 
     public ProcessState getProcessState() {
-        return (ProcessState) read(POS_PROCESS_STATE);
+        return (ProcessState) read(KEYS.indexOf(KEY_PROCESS_STATE));
     }
 
     public void setProcessState(ProcessState processState) {
-        write(POS_PROCESS_STATE, processState);
+        write(KEYS.indexOf(KEY_PROCESS_STATE), processState);
     }
 
     public int getProcessSize() {
-        return (int) read(POS_PROCESS_SIZE);
+        return (int) read(KEYS.indexOf(KEY_PROCESS_SIZE));
     }
 
     private void setProcessSize(int size) {
-        write(POS_PROCESS_SIZE, size);
+        write(KEYS.indexOf(KEY_PROCESS_SIZE), size);
     }
 
     public int getProgramCounter() {
-        return (int) read(POS_PC);
+        return (int) read(KEYS.indexOf(KEY_PC));
     }
 
-    private void setProgramCounter(int programCounter) {
-        write(POS_PC, programCounter);
+    public void setProgramCounter(int programCounter) {
+        write(KEYS.indexOf(KEY_PC), programCounter);
     }
 
     public void incrementProgramCounter() {
         setProgramCounter(getProgramCounter() + 1);
+    }
+
+    public String getKey(int i) {
+        return KEYS.get(i);
     }
 }

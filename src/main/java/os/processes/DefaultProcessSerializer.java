@@ -1,9 +1,5 @@
 package os.processes;
 
-import os.processes.ProcessData;
-import os.processes.ProcessSerializer;
-import os.processes.ProcessState;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -35,10 +31,10 @@ public class DefaultProcessSerializer implements ProcessSerializer {
         lines.add("[END VARIABLES]");
         lines.add("");
 
-        if (process.getReadFileTemp() != null) {
-            lines.add("[READ FILE TEMP]");
-            lines.add(process.getReadFileTemp());
-            lines.add("[END READ FILE TEMP]");
+        if (process.getTempVariable() != null) {
+            lines.add("[START TEMP VARIABLE]");
+            lines.add(process.getTempVariable());
+            lines.add("[END TEMP VARIABLE]");
         }
 
 
@@ -54,7 +50,7 @@ public class DefaultProcessSerializer implements ProcessSerializer {
         int end = 0;
         ProcessState state = ProcessState.READY;
         ArrayList<String> instructions = new ArrayList<>();
-        ArrayList<String> readFileTemp = new ArrayList<>();
+        ArrayList<String> tempVariable = new ArrayList<>();
         HashMap<String, Object> variables = new HashMap<>();
 
         String[] lines = process.split("\n");
@@ -62,7 +58,7 @@ public class DefaultProcessSerializer implements ProcessSerializer {
         boolean inPCB = false;
         boolean inInstructions = false;
         boolean inVariables = false;
-        boolean inReadFileTemp = false;
+        boolean inTempVariable = false;
 
         for (String line : lines) {
             if (line.equals("")) {
@@ -81,12 +77,12 @@ public class DefaultProcessSerializer implements ProcessSerializer {
                 inVariables = true;
             } else if (line.equals("[END VARIABLES]")) {
                 inVariables = false;
-            } else if (line.equals("[READ FILE TEMP]")) {
-                inReadFileTemp = true;
-            } else if (line.equals("[END READ FILE TEMP]")) {
-                inReadFileTemp = false;
-            } else if (inReadFileTemp) {
-                readFileTemp.add(line);
+            } else if (line.equals("[START TEMP VARIABLE]")) {
+                inTempVariable = true;
+            } else if (line.equals("[END TEMP VARIABLE]")) {
+                inTempVariable = false;
+            } else if (inTempVariable) {
+                tempVariable.add(line);
             } else if (inPCB) {
                 String[] parts = line.split("=");
 
@@ -114,12 +110,7 @@ public class DefaultProcessSerializer implements ProcessSerializer {
                 instructions.add(line);
             } else if (inVariables) {
                 String[] parts = line.split("=");
-
-                try {
-                    variables.put(parts[0], Integer.parseInt(parts[1]));
-                } catch (NumberFormatException e) {
-                    variables.put(parts[0], parts[1]);
-                }
+                variables.put(parts[0], parts[1]);
             }
         }
 
@@ -132,7 +123,7 @@ public class DefaultProcessSerializer implements ProcessSerializer {
             state,
             instructions,
             variables,
-            String.join("\n", readFileTemp)
+            String.join("\n", tempVariable)
         );
     }
 }

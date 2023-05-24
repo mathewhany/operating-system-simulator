@@ -1,5 +1,6 @@
 package os;
 
+import os.memory.Memory;
 import os.processes.Process;
 import os.processes.ProcessManager;
 import os.processes.ProcessState;
@@ -38,7 +39,7 @@ public class Scheduler {
             for (String path : scheduledPrograms.get(clock)) {
                 System.out.println("Program arrived at clock " + clock + ": " + path);
                 Process process = processManager.createProcess(path);
-                readyQueue.add(process.getPcb().getProcessId());
+                addProcessToReadyQueue(process.getPcb().getProcessId());
             }
             scheduledPrograms.remove(clock);
         }
@@ -48,40 +49,98 @@ public class Scheduler {
         ProcessManager processManager = kernel.getProcessManager();
         InstructionExecutor instructionExecutor = kernel.getInstructionExecutor();
 
+        printClockAndMemory();
         addScheduledPrograms();
-
         while (!readyQueue.isEmpty() || !scheduledPrograms.isEmpty()) {
-            System.out.println("Clock (" + clock + ")");
-            System.out.println("Memory");
-//            System.out.println(kernel.getProcessManager().printProcessesMemories());
-
             if (!readyQueue.isEmpty()) {
                 Process process = chooseProcessToRun();
                 int processId = process.getPcb().getProcessId();
 
-                boolean hasMoreInstructions = process.hasInstructions();
                 for (int i = 0; i < quantum && process.hasInstructions() &&
                                 process.getPcb().getProcessState() != ProcessState.BLOCKED; i++) {
+                    System.out.println("Running process #" + processId);
+
                     String instruction = process.getNextInstruction();
-                    instructionExecutor.execute(process, instruction);
+                    try {
+                        System.out.println("Executing instruction: " + instruction);
+                        instructionExecutor.execute(process, instruction);
+                    } catch (OSException e) {
+                        System.out.println(e.getMessage());
+                        process.getPcb().setProcessState(ProcessState.TERMINATED);
+                        break;
+                    }
                     clock++;
-                    hasMoreInstructions = process.hasInstructions();
+                    printClockAndMemory();
                     addScheduledPrograms();
                 }
 
-                if (process.getPcb().getProcessState() != ProcessState.BLOCKED) {
-                    if (hasMoreInstructions) {
-                        readyQueue.add(processId);
+                // Getting the process again because it might have been removed from memory
+                process = processManager.getProcess(processId);
+                if (process.getPcb().getProcessState() == ProcessState.RUNNING) {
+                    if (process.hasInstructions()) {
+                        addProcessToReadyQueue(processId);
                     } else {
+                        process.getPcb().setProcessState(ProcessState.TERMINATED);
+                        System.out.println("Process " + processId + " terminated.");
                         processManager.removeProcess(processId);
+                        printQueues();
                     }
                 }
             } else {
                 clock++;
+                printClockAndMemory();
                 addScheduledPrograms();
             }
             System.out.println();
         }
+    }
+
+    private void printClockAndMemory() {
+        System.out.println("############### Clock (" + clock + ") #############");
+        System.out.println("Memory Contents Before Clock " + clock);
+        System.out.println("---------------");
+        printMemory();
+        System.out.println("---------------");
+        System.out.println();
+    }
+
+    private void printMemory() {
+        Memory memory = kernel.getMemory();
+        HashMap<Integer, Process> processesInMemory =
+            kernel.getProcessManager().getProcessesInMemory();
+        List<String> lines = new ArrayList<>();
+
+        for (int i = 0; i < memory.getSize(); i++) {
+            Object value = memory.read(i);
+
+            String line = "#" + i + "# ";
+            if (value != null) {
+                for (Process process : processesInMemory.values()) {
+                    if (process.inProcessAddressSpace(i)) {
+                        line += "Process " + process.getPcb().getProcessId() + " ";
+                        if (process.getPcb().inRange(i)) {
+                            line +=
+                                "PCB " + process.getPcb().getKey(process.getPcb().getOffset(i)) +
+                                ": " +
+                                value;
+                        } else if (process.getInstructionsMemory().inRange(i)) {
+                            line += "Instruction #" + process.getInstructionsMemory().getOffset(i) +
+                                    ": " + value;
+                        } else if (process.getVariablesMemory().inRange(i)) {
+                            line += "Variable " + value;
+                        } else {
+                            line += value;
+                        }
+                    }
+                }
+            } else {
+                line += "null";
+            }
+
+            lines.add(line);
+        }
+
+        System.out.println(String.join("\n", lines));
     }
 
     private Process chooseProcessToRun() {
@@ -92,13 +151,12 @@ public class Scheduler {
 
         process.getPcb().setProcessState(ProcessState.RUNNING);
 
-        System.out.println("Process " + processId + " chosen to run.");
         printQueues();
 
         return process;
     }
 
-    public void addProcess(int processId) {
+    public void addProcessToReadyQueue(int processId) {
         readyQueue.add(processId);
         kernel.getProcessManager()
               .getProcess(processId)
@@ -129,6 +187,8 @@ public class Scheduler {
 
         System.out.println("Unblocked process " + processId);
         printQueues();
+
+        addProcessToReadyQueue(processId);
     }
 
     public void printQueues() {

@@ -23,11 +23,24 @@ public class MemoryBlock implements Memory {
         return size;
     }
 
+    @Override
+    public int getPhysicalAddress(int address) {
+        return memory.getPhysicalAddress(start + address);
+    }
+
     public int getStart() {
         return start;
     }
 
     public int getEnd() {
-        return start + size;
+        return start + size - 1;
+    }
+
+    public int getOffset(int address) {
+        return address - getStart();
+    }
+
+    public boolean inRange(int address) {
+        return address >= getStart() && address <= getEnd();
     }
 }

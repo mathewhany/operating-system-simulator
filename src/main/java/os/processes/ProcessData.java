@@ -12,7 +12,7 @@ public class ProcessData {
     private final ProcessState processState;
     private final List<String> instructions;
     private final HashMap<String, Object> variables;
-    private final String readFileTemp;
+    private final String tempVariable;
 
 
     public ProcessData(
@@ -24,7 +24,7 @@ public class ProcessData {
         ProcessState processState,
         List<String> instructions,
         HashMap<String, Object> variables,
-        String readFileTemp
+        String tempVariable
     ) {
         this.processId = processId;
         this.programCounter = programCounter;
@@ -34,7 +34,7 @@ public class ProcessData {
         this.processState = processState;
         this.instructions = instructions;
         this.variables = variables;
-        this.readFileTemp = readFileTemp;
+        this.tempVariable = tempVariable;
     }
 
     public int getProcessId() {
@@ -69,7 +69,7 @@ public class ProcessData {
         return variables;
     }
 
-    public String getReadFileTemp() {
-        return readFileTemp;
+    public String getTempVariable() {
+        return tempVariable;
     }
 }

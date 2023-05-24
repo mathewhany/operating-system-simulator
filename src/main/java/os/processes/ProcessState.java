@@ -1,5 +1,5 @@
 package os.processes;
 
 public enum ProcessState {
-    READY, BLOCKED, RUNNING
+    READY, BLOCKED, RUNNING, TERMINATED
 }
