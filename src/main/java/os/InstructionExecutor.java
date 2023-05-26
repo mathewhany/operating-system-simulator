@@ -1,6 +1,7 @@
 package os;
 
 import os.processes.Process;
+import os.processes.ProcessData;
 
 public class InstructionExecutor {
     private final Kernel kernel;
@@ -11,6 +12,7 @@ public class InstructionExecutor {
 
     public void execute(Process process, String instruction) throws OSException {
         String[] line = instruction.split(" ");
+        int pid = process.getPcb().getProcessId();
 
         if (line[0].equals("semWait") && line.length == 2) {
             SystemCalls.semWait(kernel, process, line[1]);
@@ -22,6 +24,7 @@ public class InstructionExecutor {
                 return;
             } else {
                 SystemCalls.assign(process, line[1], process.getTemp());
+                process.setTemp(null);
             }
         } else if (line[0].equals("assign") && line.length == 4 && line[2].equals("readFile")) {
             if (process.getTemp() == null) {
@@ -29,9 +32,10 @@ public class InstructionExecutor {
                 return;
             } else {
                 SystemCalls.assign(process, line[1], process.getTemp());
+                process.setTemp(null);
             }
         } else if (line[0].equals("assign") && line.length == 3) {
-            SystemCalls.assign(process, line[1], line[2]);
+            SystemCalls.assignVariable(process, line[1], line[2]);
         } else if (line[0].equals("print") && line.length == 2) {
             SystemCalls.print(process, line[1]);
         } else if (line[0].equals("writeFile") && line.length == 3) {
@@ -42,7 +46,13 @@ public class InstructionExecutor {
             throw new OSException("Invalid instruction " + instruction);
         }
 
-        process.incrementProgramCounter();
+        // Process might be unloaded from memory after executing the instruction,
+        // for example after semSignal another process might be needed to be loaded to change
+        // its state to ready instead of blocked, and maybe there is no enough memory, so this
+        // running process should be unloaded to make space for the other process.
+        Process currentProcess = kernel.getProcessManager().getProcess(pid);
+
+        currentProcess.incrementProgramCounter();
     }
 
 }

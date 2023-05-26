@@ -24,9 +24,9 @@ public class Kernel {
         this.instructionExecutor = new InstructionExecutor(this);
         this.memoryAllocator = new MemoryAllocator(memory);
 
-        mutexes.put("file", new Mutex(this));
-        mutexes.put("userInput", new Mutex(this));
-        mutexes.put("userOutput", new Mutex(this));
+        mutexes.put("file", new Mutex("file", this));
+        mutexes.put("userInput", new Mutex("userInput", this));
+        mutexes.put("userOutput", new Mutex("userOutput", this));
     }
 
     public Scheduler getScheduler() {

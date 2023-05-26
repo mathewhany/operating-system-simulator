@@ -18,15 +18,21 @@ public class SystemCalls {
         mutex.semSignal(process.getPcb().getProcessId());
     }
 
-    public static void assign(Process process, String variableName, String sourceVariable) {
-        process.setVariable(variableName, process.getVariable(sourceVariable));
+    public static void assignVariable(Process process, String variableName, String sourceVariableName) {
+        process.setVariable(variableName, process.getVariable(sourceVariableName));
+    }
+
+    public static void assign(Process process, String variableName, String value) {
+        process.setVariable(variableName, value);
     }
 
     public static void print(Process process, String variableName) {
         System.out.println(process.getVariable(variableName));
     }
 
-    public static void writeFile(Process process, String filePath, String contentVariable) throws OSException {
+    public static void writeFile(Process process, String filePathVariable, String contentVariable) throws OSException {
+        String filePath = (String) process.getVariable(filePathVariable);
+
         try {
             Files.writeString(Paths.get(filePath), (String) process.getVariable(contentVariable));
         } catch (IOException e) {
@@ -34,7 +40,9 @@ public class SystemCalls {
         }
     }
 
-    public static void readFile(Process process, String filePath) throws OSException {
+    public static void readFile(Process process, String filePathVariable) throws OSException {
+        String filePath = (String) process.getVariable(filePathVariable);
+
         try {
             String content = Files.readString(Paths.get(filePath));
             process.setTemp(content);

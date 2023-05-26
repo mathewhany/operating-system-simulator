@@ -42,6 +42,7 @@ public class Scheduler {
                 addProcessToReadyQueue(process.getPcb().getProcessId());
             }
             scheduledPrograms.remove(clock);
+            printMemory("After adding scheduled programs at clock cycle " + clock);
         }
     }
 
@@ -49,28 +50,37 @@ public class Scheduler {
         ProcessManager processManager = kernel.getProcessManager();
         InstructionExecutor instructionExecutor = kernel.getInstructionExecutor();
 
-        printClockAndMemory();
+        printClock();
         addScheduledPrograms();
+
         while (!readyQueue.isEmpty() || !scheduledPrograms.isEmpty()) {
             if (!readyQueue.isEmpty()) {
                 Process process = chooseProcessToRun();
                 int processId = process.getPcb().getProcessId();
 
                 for (int i = 0; i < quantum && process.hasInstructions() &&
-                                process.getPcb().getProcessState() != ProcessState.BLOCKED; i++) {
+                                processManager.getProcess(processId).getPcb().getProcessState() !=
+                                ProcessState.BLOCKED; i++) {
                     System.out.println("Running process #" + processId);
 
-                    String instruction = process.getNextInstruction();
+                    String instruction = processManager.getProcess(processId).getNextInstruction();
                     try {
                         System.out.println("Executing instruction: " + instruction);
-                        instructionExecutor.execute(process, instruction);
+                        instructionExecutor.execute(
+                            processManager.getProcess(processId),
+                            instruction
+                        );
                     } catch (OSException e) {
                         System.out.println(e.getMessage());
-                        process.getPcb().setProcessState(ProcessState.TERMINATED);
+                        processManager.getProcess(processId)
+                                      .getPcb()
+                                      .setProcessState(ProcessState.TERMINATED);
                         break;
                     }
+                    printMemory(
+                        "Memory after instruction execution at end of clock cycle " + clock);
                     clock++;
-                    printClockAndMemory();
+                    printClock();
                     addScheduledPrograms();
                 }
 
@@ -85,26 +95,32 @@ public class Scheduler {
                         processManager.removeProcess(processId);
                         printQueues();
                     }
+                    printMemory("At start of clock cycle " + clock);
                 }
             } else {
+                printMemory("At end of clock cycle " + clock);
                 clock++;
-                printClockAndMemory();
+                printClock();
                 addScheduledPrograms();
             }
             System.out.println();
         }
     }
 
-    private void printClockAndMemory() {
-        System.out.println("############### Clock (" + clock + ") #############");
-        System.out.println("Memory Contents Before Clock " + clock);
-        System.out.println("---------------");
-        printMemory();
-        System.out.println("---------------");
+    private void printClock() {
         System.out.println();
+        System.out.println();
+        System.out.println();
+        System.out.println();
+        System.out.println();
+        System.out.println("############### Clock (" + clock + ") #############");
     }
 
-    private void printMemory() {
+    private void printMemory(String messageSuffix) {
+        System.out.println();
+        System.out.println();
+        System.out.println("Memory Contents " + messageSuffix);
+        System.out.println("-----------------------------");
         Memory memory = kernel.getMemory();
         HashMap<Integer, Process> processesInMemory =
             kernel.getProcessManager().getProcessesInMemory();
@@ -141,6 +157,9 @@ public class Scheduler {
         }
 
         System.out.println(String.join("\n", lines));
+        System.out.println("------------------------------------");
+        System.out.println();
+        System.out.println();
     }
 
     private Process chooseProcessToRun() {

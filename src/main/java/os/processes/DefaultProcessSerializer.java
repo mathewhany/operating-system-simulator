@@ -113,7 +113,7 @@ public class DefaultProcessSerializer implements ProcessSerializer {
                 variables.put(parts[0], parts[1]);
             }
         }
-
+        System.out.println(tempVariable);
         return new ProcessData(
             pid,
             pc,
@@ -123,7 +123,7 @@ public class DefaultProcessSerializer implements ProcessSerializer {
             state,
             instructions,
             variables,
-            String.join("\n", tempVariable)
+            tempVariable.size() > 0 ? String.join("\n", tempVariable) : null
         );
     }
 }

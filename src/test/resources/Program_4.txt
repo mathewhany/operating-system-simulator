@@ -1,2 +1,0 @@
-assign a input
-print a

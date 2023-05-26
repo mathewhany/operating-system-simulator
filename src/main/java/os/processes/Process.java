@@ -117,6 +117,8 @@ public class Process {
         for (String name : data.getVariables().keySet()) {
             setVariable(name, data.getVariables().get(name));
         }
+
+        setTemp(data.getTempVariable());
     }
 
     public ProcessData toProcessData() {
